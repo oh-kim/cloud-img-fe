@@ -9,8 +9,11 @@ export default function FilePreview({
         const imageURL = URL.createObjectURL(image);
 
         return (
-          <li key={image.name}>
-            <img src={imageURL} className='h-40 object-cover rounded-md'></img>
+          <li key={image.name} className='h-40'>
+            <img
+              src={imageURL}
+              className='h-full object-cover rounded-md'
+            ></img>
           </li>
         );
       })}

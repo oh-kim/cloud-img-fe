@@ -13,9 +13,21 @@ function SearchForm({ onSearchChange, onSearchSubmit }: Props) {
 
   return (
     <form onSubmit={handleSearchSubmit}>
-      <label htmlFor='search'>
-        <input id='search' onChange={handleSearchChange}></input>
-        <input type='submit' value='검색'></input>
+      <label
+        htmlFor='search'
+        className='flex items-center justify-between bg-slate-200 rounded-lg  focus:ring-2 focus:ring-blue-500 focus:border:blue-500'
+      >
+        <input
+          id='search'
+          onChange={handleSearchChange}
+          placeholder='검색'
+          className='bg-slate-200 ml-2 w-full outline-none rounded-lg'
+        ></input>
+        <input
+          type='submit'
+          value='🔎'
+          className='p-2 bg-slate-200 rounded-lg'
+        ></input>
       </label>
     </form>
   );
