@@ -10,11 +10,18 @@ function LocationInputForm({ onNewCenter }: Props) {
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const result = e.target.value;
+
     setLocation(result);
   };
 
   const onSearchSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (location.length === 0) {
+      alert("no query");
+      return;
+    }
+
     naver.maps.Service.geocode(
       {
         query: location,
