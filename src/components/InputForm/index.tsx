@@ -58,7 +58,7 @@ export default function InputForm({ handleNewCenter }: Props) {
       .catch((error) => console.log(error));
   };
 
-  const handleDetail = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const handleDetail = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.id === "title") {
       const title = e.currentTarget.value;
@@ -67,7 +67,7 @@ export default function InputForm({ handleNewCenter }: Props) {
       const content = e.currentTarget.value;
       setDetail((detail) => ({ ...detail, content }));
     }
-  }, []);
+  };
 
   return (
     <div className='h-full flex flex-col p-2 gap-2'>
