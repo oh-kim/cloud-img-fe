@@ -3,12 +3,14 @@ import FileInputForm from "./fileInputForm";
 import FilePreview from "./filePreview";
 import LocationInputForm from "./locationInputForm";
 import DetailInputForm from "./detailInputForm";
+import { MapInfo } from "../../types";
 
 interface Props {
+  mapInfo: MapInfo | null;
   handleNewCenter: (newCenter: naver.maps.Point) => void;
 }
 
-export default function InputForm({ handleNewCenter }: Props) {
+export default function InputForm({ mapInfo, handleNewCenter }: Props) {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [detail, setDetail] = useState<{ title: string; content: string }>({
     title: "",
@@ -37,19 +39,30 @@ export default function InputForm({ handleNewCenter }: Props) {
     e.preventDefault();
 
     const formData = new FormData();
+
     selectedImages.forEach((image) => {
-      formData.append("imageFiles", image);
+      formData.append("file", image);
     });
 
-    formData.append(
-      "data",
-      JSON.stringify({
-        title: detail.title,
-        content: detail.content,
-      })
+    const boardDTO = new Blob(
+      [
+        JSON.stringify({
+          title: detail.title,
+          content: detail.content,
+          maxLat: mapInfo?.max.maxLat,
+          maxLng: mapInfo?.max.maxLng,
+          lat: mapInfo?.center.centerLat,
+          lng: mapInfo?.center.centerLng,
+        }),
+      ],
+      { type: "application/json" }
     );
 
-    fetch("http://localhost:3000/photos/upload", {
+    formData.append("boardDto", boardDTO);
+
+    // /api/board/boards
+    const nodeURL = `${import.meta.env.VITE_DEV_URL}/photos/upload`;
+    fetch(nodeURL, {
       method: "POST",
       body: formData,
     })
