@@ -2,23 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import InputForm from "../InputForm";
 import MapContainer from "../map/mapContainer";
 import debounce from "../../utils/debounce";
-
-type NaverMapType = naver.maps.Map;
-type MapPointType = naver.maps.Point;
-type CenterPoint = {
-  x: number;
-  y: number;
-};
-
-interface MapInfo {
-  center: { centerLng: number; centerLat: number };
-  max: { maxLng: number; maxLat: number };
-}
+import useMarker from "../../hooks/useMarker";
+import { MapInfo, imageFile } from "../../types";
 
 function Main() {
   const ref = useRef(null);
-  const NaverMap = useRef<NaverMapType | null>(null);
+  const NaverMap = useRef<naver.maps.Map | null>(null);
   const [mapInfo, setMapInfo] = useState<MapInfo | null>(null);
+  const [imageFileList, setImageFileList] = useState<imageFile[]>([]);
   const { naver } = window;
 
   // map init
@@ -38,11 +29,11 @@ function Main() {
       center: center,
       zoom: 14,
     });
+
     const zoomChangedListener = naver.maps.Event.addListener(
       NaverMap.current,
       "zoom_changed",
       debounce(() => {
-        console.log("zoom changed?");
         handleMapInfo();
       }, 800)
     );
@@ -56,42 +47,53 @@ function Main() {
       }, 800)
     );
 
+    handleMapInfo();
+
     return () => {
       naver.maps.Event.removeListener(zoomChangedListener);
       naver.maps.Event.removeListener(centerChangedListener);
     };
   }, []);
 
+  // 지도에 보여지는 썸네일 리스트 불러오기 (mapInfo)
   useEffect(() => {
-    console.log(mapInfo, "map info useEffect ");
     if (!mapInfo) return;
     function mapInfoToSearchParams(mapInfo: MapInfo): URLSearchParams {
       const params = new URLSearchParams();
 
-      // Add the center values
-      params.append("centerLng", mapInfo.center.centerLng.toString());
-      params.append("centerLat", mapInfo.center.centerLat.toString());
+      const {
+        center: { centerLng, centerLat },
+        max: { maxLng, maxLat },
+      } = mapInfo;
 
-      // Add the max values
-      params.append("maxLng", mapInfo.max.maxLng.toString());
-      params.append("maxLat", mapInfo.max.maxLat.toString());
+      params.append("lng", centerLng.toString());
+      params.append("lat", centerLat.toString());
 
+      params.append("maxLng", maxLng.toString());
+      params.append("maxLat", maxLat.toString());
       return params;
     }
 
     const query = mapInfoToSearchParams(mapInfo).toString();
-    const URL = `http://localhost:3000/api/board/boars?` + query;
-    console.log(URL);
-    fetch(URL, {
+
+    // /api/board/boards
+    const nodeURL = `${import.meta.env.VITE_DEV_URL}/thumbnail?${query}`;
+    fetch(nodeURL, {
       method: "GET",
-      // body: JSON.stringify(mapInfo),
+      headers: { "Content-Type": "application/json" },
     })
       .then((res) => res.json())
-      .then((data) => console.log(data))
+      .then((data: imageFile[]) => {
+        console.log(data);
+        setImageFileList((image) => [...image, ...data]);
+      })
       .catch((error) => console.log(error));
   }, [mapInfo]);
 
-  const handleNewCenter = (newCenter: MapPointType) => {
+  // 마커 찍기
+  useMarker(imageFileList, NaverMap.current);
+
+  const handleNewCenter = (newCenter: naver.maps.Point) => {
     if (!NaverMap.current) return;
     NaverMap.current.setCenter(newCenter);
   };
@@ -100,8 +102,7 @@ function Main() {
     console.log("handle Map Information");
     if (!NaverMap.current) return;
 
-    const { x: centerLng, y: centerLat }: CenterPoint =
-      NaverMap.current.getCenter();
+    const { x: centerLng, y: centerLat } = NaverMap.current.getCenter();
     const { x: maxLng, y: maxLat } = NaverMap.current.getBounds().getMax();
     setMapInfo(() => ({
       center: { centerLng, centerLat },
@@ -112,8 +113,10 @@ function Main() {
   return (
     <>
       <MapContainer ref={ref} />
-      {/* <button onClick={() => console.log(mapInfo)}>정보 확인하기</button> */}
-      <InputForm handleNewCenter={handleNewCenter}></InputForm>
+      <InputForm
+        mapInfo={mapInfo}
+        handleNewCenter={handleNewCenter}
+      ></InputForm>
     </>
   );
 }
